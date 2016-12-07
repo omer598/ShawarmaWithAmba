@@ -101,7 +101,7 @@ int main()
         cin>>buffer;
 		send(sock,buffer,sizeof(buffer),0);
 		//recv(sock,buffer,sizeof(buffer),0);
-        while(buffer[0] != 'Z'){
+        while(buffer[0] != 'E'){
     		recv(sock,buffer,sizeof(buffer),0);
 			if(buffer[0] == '1') //Player Color pick
 			{
@@ -119,7 +119,13 @@ int main()
 				printBoard(board);
 			}
         }
+                
         recv(sock,buffer,sizeof(buffer),0);
+        cout<<endl<<buffer<<endl<<endl;
+        
+        //recv(sock,buffer,sizeof(buffer),0);
+        //cout<<endl<<buffer<<endl;
+        
         cout << "The game is over." << endl;
         close(sock);
         cout << "Socket closed!" << endl;
