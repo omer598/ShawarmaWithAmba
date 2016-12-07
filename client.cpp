@@ -74,61 +74,66 @@ void printBoard(char** msg)
 
 int main()
 {
-	int sock,portNum;
-	char buffer[1024]={'\0'};
-	char** board;
-	board = new char*[lines];
-	for (int p=0;p<lines;p++)
-		board[p] = new char[coloumns];
-	portNum=11111;
-	sock=socket(PF_INET,SOCK_STREAM,0);
-	if(sock<0)
-	{
-		cout <<"Error establish socket" <<endl;
-		return 0;
-	}
-	struct sockaddr_in server_addr;
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons( 65535 );
-	server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	connect(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr_in));
-	//Receives first massage (ip back!)
-	recv(sock,buffer,sizeof(buffer),0);
-	cout<<buffer<<endl;
-	recv(sock,buffer,sizeof(buffer),0);
-	cout<<buffer<<endl;
-        nullTheArray(buffer);
-        cin>>buffer;
-		send(sock,buffer,sizeof(buffer),0);
-		//recv(sock,buffer,sizeof(buffer),0);
-        while(buffer[0] != 'E'){
-    		recv(sock,buffer,sizeof(buffer),0);
-			if(buffer[0] == '1') //Player Color pick
-			{
-				recv(sock,buffer,sizeof(buffer),0);
-				cout<<buffer<<endl;
-				nullTheArray(buffer);
-				cin>>buffer;
-				send(sock,buffer,sizeof(buffer),0);
-				//recv(sock,buffer,sizeof(buffer),0);
-			}
-			if (buffer[0] == '2') //Update board and update printed board
-			{
-				recv(sock,buffer,sizeof(buffer),0);
-				updateBoard(buffer, board);
-				printBoard(board);
-			}
-        }
-                
+    int sock,portNum;
+    char buffer[1024]={'\0'};
+    char** board;
+    board = new char*[lines];
+    for (int p=0;p<lines;p++)
+            board[p] = new char[coloumns];
+    portNum=11111;
+    sock=socket(PF_INET,SOCK_STREAM,0);
+    if(sock<0)
+    {
+            cout <<"Error establish socket" <<endl;
+            return 0;
+    }
+    struct sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons( 65535 );
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    connect(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr_in));
+    //Receives first massage (ip back!)
+    recv(sock,buffer,sizeof(buffer),0);
+    cout<<buffer<<endl;
+    recv(sock,buffer,sizeof(buffer),0);
+    cout<<buffer<<endl;
+    nullTheArray(buffer);
+    cin>>buffer;
+    send(sock,buffer,sizeof(buffer),0);
+    //recv(sock,buffer,sizeof(buffer),0);
+    while(buffer[0] != 'E')
+    {    
         recv(sock,buffer,sizeof(buffer),0);
-        cout<<endl<<buffer<<endl<<endl;
-        
-        //recv(sock,buffer,sizeof(buffer),0);
-        //cout<<endl<<buffer<<endl;
-        
-        cout << "The game is over." << endl;
-        close(sock);
-        cout << "Socket closed!" << endl;
-	return 0;
+        if(buffer[0] == 'I') //Player Color pick
+        {
+            recv(sock,buffer,sizeof(buffer),0);
+            cout << buffer << endl;
+            nullTheArray(buffer);
+            cin >> buffer;
+            send(sock,buffer,sizeof(buffer),0);
+            //recv(sock,buffer,sizeof(buffer),0);
+        }
+        else if (buffer[0] == '2') //Update board and update printed board
+        {
+            recv(sock,buffer,sizeof(buffer),0);
+            updateBoard(buffer, board);
+            printBoard(board);
+        }
+        else if (buffer[0] == 'M') //server massege
+        {
+            /*recives game info*/        
+            recv(sock,buffer,sizeof(buffer),0);
+            cout<< "Game info: "<<endl<<buffer<<endl;
+        }
+    }
+    /*TODO: insert xor for choose start player*/
+
+    //recv(sock,buffer,sizeof(buffer),0);
+    //cout<<endl<<buffer<<endl;
+
+    cout << "The game is over." << endl;
+    close(sock);
+    cout << "Socket closed!" << endl;
+    return 0;
 }
 

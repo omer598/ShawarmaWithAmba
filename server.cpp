@@ -102,29 +102,29 @@ int main ()
     	nullTheArray(buffer);
     	//cout <<"while 1" << endl;
         //this command will be sent to user 1 only
-        sprintf(buffer,"%s","1");
+        sprintf(buffer,"%s","I");
         send(u1.client_id,buffer,sizeof(buffer),0);
     	nullTheArray(buffer);
-		sprintf(buffer,"%s","please insert color (R or B only):");
-		send(u1.client_id,buffer,sizeof(buffer),0);
-		recv(u1.client_id,buffer,sizeof(buffer),0);
-		//command to u1 only end here
-		u1.color = buffer[0];
-		if(u1.color == 'R' || u1.color == 'r' )
-                {
-			u2.color='B';
-                        cout<<"--color selected successfully!"<<endl;
-                }
-		else if (u1.color == 'B' || u1.color == 'b' )
-                {
-			u2.color='R';
-                        cout<<"--color selected successfully!"<<endl;
-                }
-		else
-                {
-			u2.color='Z';
-                        cout<<"--wrong color selected, sending-again"<<endl;
-                }
+        sprintf(buffer,"%s","please insert color (R or B only):");
+        send(u1.client_id,buffer,sizeof(buffer),0);
+        recv(u1.client_id,buffer,sizeof(buffer),0);
+        //command to u1 only end here
+        u1.color = buffer[0];
+        if(u1.color == 'R' || u1.color == 'r' )
+        {
+                u2.color='B';
+                cout<<"--color selected successfully!"<<endl;
+        }
+        else if (u1.color == 'B' || u1.color == 'b' )
+        {
+                u2.color='R';
+                cout<<"--color selected successfully!"<<endl;
+        }
+        else
+        {
+                u2.color='Z';
+                cout<<"--wrong color selected, sending-again"<<endl;
+        }
     } while (u2.color == 'Z');
 
     //Start game screen
@@ -138,12 +138,9 @@ int main ()
     send(u1.client_id,buffer,sizeof(buffer),0);
     send(u2.client_id,buffer,sizeof(buffer),0);
 	nullTheArray(buffer);
-        
-    sprintf(buffer,"%s","E");
-    send(u1.client_id,buffer,sizeof(buffer),0);
-    send(u2.client_id,buffer,sizeof(buffer),0);  
+         
     
-    //Print all players data
+    //Print all players data -- server side
     cout << "--users data" << endl;
     cout << endl << "  user 1:" << endl << "  client id: " << u1.client_id << " nickname: " <<
             u1.username << " color: " << u1.color << endl << endl;
@@ -151,16 +148,22 @@ int main ()
             u2.username<<" color: "<<u2.color<<endl;
 
 
-    
+    /*sends game data to both players*/
+    buffer[0]='M';
+    send(u1.client_id,buffer,sizeof(buffer),0);
+    send(u2.client_id,buffer,sizeof(buffer),0);
     nullTheArray(buffer);
-    sprintf(buffer,"you are playing against: %s ,your color is: %c" ,(char*)u2.username.c_str(),u1.color);
+    sprintf(buffer,"you are playing against: %s ,your color is: %c\n" ,(char*)u2.username.c_str(),u1.color);
     send(u1.client_id,buffer,sizeof(buffer),0);
     nullTheArray(buffer);
-    sprintf(buffer,"you are playing against: %s ,your color is: %c" ,(char*)u1.username.c_str(),u2.color);
+    sprintf(buffer,"you are playing against: %s ,your color is: %c\n" ,(char*)u1.username.c_str(),u2.color);
     send(u2.client_id,buffer,sizeof(buffer),0);  
-    
+    nullTheArray(buffer);
           
     //send an end game message to both players
+    sprintf(buffer,"%s","E");
+    send(u1.client_id,buffer,sizeof(buffer),0);
+    send(u2.client_id,buffer,sizeof(buffer),0); 
 	nullTheArray(buffer);
     cout << endl << "% end of log %" << endl;
 
