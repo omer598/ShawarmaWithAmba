@@ -18,6 +18,11 @@ using namespace std;
 #define lines 6
 #define coloumns 7
 #define underline "\33[4m"
+#define RED "\033[0;31m"
+#define BLUE "\033[0;34m"
+#define NoColor "\033[0m"
+#define clearScreen() (cout << "\033[H\033[J")
+#define gotoxy(x,y) (printf("\033[%d;%dH", (x), (y)))
 
 struct sockaddr_serverIn{
 	short sin_family;
@@ -51,30 +56,71 @@ void printBoard(char** msg)
 	char sideBar = '|';
 	char lowBar = '_';
 	int k = 0;
+	clearScreen();
+	int y_axis = 3;
+	int x_axis = 3;
+	//gotoxy(x_axis,y_axis);
+	cout << "Player 1 color: " << endl << "Player 2 color:" << endl;
+	cout << endl << endl << endl;
+	cout << "\t" << "╔";
+	for (int k = 0; k < coloumns * 2-1; k++)
+		if (k%2)
+			cout << "╦";
+		else
+			cout << "   ";
+	cout << "╗" << endl;
+	//gotoxy(x_axis,++y_axis);
 
-	cout << underline;
-	for (int k = 0; k <= coloumns * 2; k++)
-		cout << ' ';
-	cout << "\33[0m" << endl;
-
-	for (int i = 0; i<lines; i++)
+	for (int i = 0; i<lines*2-1; i++)
 	{
-		cout << sideBar << underline;
-		for (int j = 0; j < coloumns; j++)
+		if (i%2)
 		{
-			cout << msg[i][j];
-			if (j != (coloumns - 1))
-				cout << sideBar;
+			cout << "\t" << "╠"; //<< underline;
+			for (int j = 0; j < coloumns*2-1; j++)
+			{
+				if (j%2)
+					cout << "╬";
+				else if (j != (coloumns*2 - 1))
+					cout << "═══";
+
+			}
+			cout << "╣" << endl;//"\33[0m" << "║" << endl;
 
 		}
-		cout << "\33[0m" << sideBar << endl;
+		else
+		{
+			cout << "\t" << "║" << " "; //<< underline;
+			for (int j = 0; j < coloumns; j++)
+			{
+				switch(msg[i/2][j]){
+				case 'R':
+					cout << RED << "●" << NoColor;
+					break;
+				case 'B':
+					cout << BLUE << "●" << NoColor;
+					break;
+				default:
+					cout << msg[i/2][j];
+					break;
+				}
+				//cout  << msg[i/2][j];
+				if (j != (coloumns - 1))
+					cout << " ║ ";
+
+			}
+			cout << " ║" << endl;//"\33[0m" << "║" << endl;
+		}
+		//gotoxy(x_axis,++y_axis);
 	}
-	/*
-	cout << sideBar;
-	for(int i=0;i<coloumns*2;i++)
-	cout<<lowBar;
-	cout<< sideBar <<endl;
-	*/
+
+	cout << "\t" << "╚";
+	for (int k = 0; k < coloumns * 2-1; k++)
+		if (k%2)
+			cout << "╩";
+		else
+			cout << "═══";
+	cout << "╝" << endl;
+
 }
 
 int main()
@@ -109,7 +155,7 @@ int main()
 	while (buffer[0] != 'E')
 	{
 		recv(sock, buffer, sizeof(buffer), 0);
-		if (buffer[0] == 'I') //Player Color pick
+		if (buffer[0] == 'I') //Input from client
 		{
 			recv(sock, buffer, sizeof(buffer), 0);
 			cout << buffer << endl;
@@ -118,15 +164,15 @@ int main()
 			send(sock, buffer, sizeof(buffer), 0);
 			//recv(sock,buffer,sizeof(buffer),0);
 		}
-		else if (buffer[0] == '2') //Update board and update printed board
+		else if (buffer[0] == 'U') //Update board and update printed board
 		{
 			recv(sock, buffer, sizeof(buffer), 0);
 			updateBoard(buffer, board);
 			printBoard(board);
 		}
-		else if (buffer[0] == 'M') //server massege
+		else if (buffer[0] == 'M') //server massage
 		{
-			/*recives game info*/
+			/*receives game info*/
 			recv(sock, buffer, sizeof(buffer), 0);
 			cout << "Game info: " << endl << buffer << endl;
 		}

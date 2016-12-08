@@ -52,7 +52,7 @@ void startConnection(int* sock, char* buffer, sockaddr_in* serv, sockaddr_in* cl
 void initBoard(char* board)
 {
 	for (int p = 0; p < lines*coloumns; p++)
-		board[p] = ' ';
+		board[p] = '*';
 }
 
 int main()
@@ -191,14 +191,16 @@ int main()
 		recv(u2.client_id, buffer, sizeof(buffer), 0);
 		u2.start_bit = buffer[0];
 	}
-	//calculate
+	//calculate who starts the game
 	u1.start_bit = u1.start_bit - '0';
 	u2.start_bit = u2.start_bit - '0';
 	firstPlayer = u1.start_bit ^ u2.start_bit;
 
 
-	//Start game screen
-	sprintf(buffer, "%s", "2");
+	//Start game
+
+	//send updated board
+	sprintf(buffer, "%s", "U");
 	send(u1.client_id, buffer, sizeof(buffer), 0);
 	send(u2.client_id, buffer, sizeof(buffer), 0);
 	nullTheArray(buffer);
@@ -214,17 +216,17 @@ int main()
 		u1.username << " color: " << u1.color << endl << endl;
 	cout << "  user 2:" << endl << "  client id: " << u2.client_id << " nickname: " <<
 		u2.username << " color: " << u2.color << endl;
-	cout << (firstPlayer ? "--Player 2 starts" : "--Player 1 starts") << endl;
+	cout << "--Player " << 1+firstPlayer << " starts" << endl;
 
 	/*sends game data to both players*/
 	buffer[0] = 'M';
 	send(u1.client_id, buffer, sizeof(buffer), 0);
 	send(u2.client_id, buffer, sizeof(buffer), 0);
 	nullTheArray(buffer);
-	sprintf(buffer, "You are playing against: %s ,your color is: %c\nPlayer %d starts\n", (char*)u2.username.c_str(), u1.color, (1 + firstPlayer));
+	sprintf(buffer, "You are playing against player %s, your color is: %c\nPlayer %d starts\n", (char*)u2.username.c_str(), u1.color, (1 + firstPlayer));
 	send(u1.client_id, buffer, sizeof(buffer), 0);
 	nullTheArray(buffer);
-	sprintf(buffer, "You are playing against: %s ,your color is: %c\nPlayer %d starts\n", (char*)u1.username.c_str(), u2.color, (1 + firstPlayer));
+	sprintf(buffer, "You are playing against player %s, your color is: %c\nPlayer %d starts\n", (char*)u1.username.c_str(), u2.color, (1 + firstPlayer));
 	send(u2.client_id, buffer, sizeof(buffer), 0);
 	nullTheArray(buffer);
 
