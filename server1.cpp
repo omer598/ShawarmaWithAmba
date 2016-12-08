@@ -50,7 +50,7 @@ void startConnection(int* sock, char* buffer, sockaddr_in* serv, sockaddr_in* cl
 void initBoard(char* board)
 {
 	for (int p = 0; p < lines*coloumns; p++)
-		board[p] = ' ';
+		board[p] = '*';
 }
 
 int main()
@@ -199,7 +199,7 @@ int main()
 
 
 	//Start game screen
-	sprintf(buffer, "%s", "2");
+	sprintf(buffer, "%s", "U");
 	send(u1.getID(), buffer, sizeof(buffer), 0);
 	send(u2.getID(), buffer, sizeof(buffer), 0);
 	nullTheArray(buffer);
@@ -215,7 +215,7 @@ int main()
 		u1.getUN() << " color: " << u1.getColor() << endl << endl;
 	cout << "  user 2:" << endl << "  client id: " << u2.getID() << " nickname: " <<
 		u2.getUN() << " color: " << u2.getColor() << endl;
-	cout << (firstPlayer ? "--Player 2 starts" : "--Player 1 starts") << endl;
+	cout << "--Player " << 1+firstPlayer << " starts"  << endl;
 
 	/*sends game data to both players*/
 	buffer[0] = 'M';
@@ -229,11 +229,12 @@ int main()
 	send(u2.getID(), buffer, sizeof(buffer), 0);
 	nullTheArray(buffer);
         
-        //while (checkIfWon()) - need to put inf loop until some1 wins..
-        sprintf(buffer,"please select a column:\n");
-        //maybe needs to be u2.. we need to check who wins first
-        send(u1.getID(),buffer);
-        nullTheArray(buffer);
+	//while (checkIfWon()) - need to put inf loop until some1 wins..
+	sprintf(buffer,"please select a column:\n");
+	//maybe needs to be u2.. we need to check who wins first
+	send(u1.getID(),buffer);
+	nullTheArray(buffer);
+	
 	//send an end game message to both players
 	sprintf(buffer, "%s", "E");
 	send(u1.getID(), buffer, sizeof(buffer), 0);
