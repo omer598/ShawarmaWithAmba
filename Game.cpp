@@ -10,6 +10,12 @@
 
 #define lines 6
 #define columns 7
+#define underline "\33[4m"
+#define RED "\033[0;31m"
+#define BLUE "\033[0;34m"
+#define NoColor "\033[0m"
+#define clearScreen() (cout << "\033[H\033[J")
+#define gotoxy(x,y) (printf("\033[%d;%dH", (x), (y)))
 using namespace std;
 
 //constructor for Game object. setting game init data
@@ -32,13 +38,76 @@ Game::~Game(){
         delete [] this->board[p];
     delete [] this->board;  
 }
-void Game::printBoard(){
-    for(int i=0;i<lines;i++){
-        for(int j=0;j<columns;j++)
-            cout<<this->board[j][i]<<" ";
-        cout<<endl;
-    }
-    
+
+void Game::printBoard()
+{
+	char sideBar = '|';
+	char lowBar = '_';
+	int k = 0;
+	//clearScreen();
+	int y_axis = 3;
+	int x_axis = 3;
+	//gotoxy(x_axis,y_axis);
+	cout << "Player 1 color: " << this->playerOneColor<< endl << "Player 2 color:" <<this->playerTwoColor<<endl;
+	cout << endl << endl << endl;
+	cout << "\t" << "╔";
+	for (int k = 0; k < columns * 2-1; k++)
+		if (k%2)
+			cout << "╦";
+		else
+			cout << "   ";
+	cout << "╗" << endl;
+	//gotoxy(x_axis,++y_axis);
+
+	for (int i = 0; i<lines*2-1; i++)
+	{
+		if (i%2)
+		{
+			cout << "\t" << "╠"; //<< underline;
+			for (int j = 0; j < columns*2-1; j++)
+			{
+				if (j%2)
+					cout << "╬";
+				else if (j != (columns*2 - 1))
+					cout << "═══";
+
+			}
+			cout << "╣" << endl;//"\33[0m" << "║" << endl;
+
+		}
+		else
+		{
+			cout << "\t" << "║" << " "; //<< underline;
+			for (int j = 0; j < columns; j++)
+			{
+				switch(this->board[j][i/2]){
+				case 'R':
+					cout << RED << "●" << NoColor;
+					break;
+				case 'B':
+					cout << BLUE << "●" << NoColor;
+					break;
+				default:
+					cout << this->board[j][i/2];
+					break;
+				}
+				//cout  << this->board[i/2][j];
+				if (j != (columns - 1))
+					cout << " ║ ";
+
+			}
+			cout << " ║" << endl;//"\33[0m" << "║" << endl;
+		}
+		//gotoxy(x_axis,++y_axis);
+	}
+
+	cout << "\t" << "╚";
+	for (int k = 0; k < columns * 2-1; k++)
+		if (k%2)
+			cout << "╩";
+		else
+			cout << "═══";
+	cout << "╝" << endl;
 }
 /*private method that checks if we have a 4 match
  option variable : 1-down, 2-left, 3-left and down (diagonal), 4-left and up (diagonal)
@@ -103,7 +172,7 @@ int Game::checkEndGame(){
     char check;
     for(int i=0;i<lines;i++){
         for(int j=0;j<columns;j++){
-            check=this->board[j][i];
+            check=this->board[i][j];
             if(j <= 3){
                 if(i<=2){
                     if(checkFour(1,i,j) || checkFour(3,i,j)){
@@ -157,7 +226,7 @@ void Game::updateBoard(int position, char addORremove,int playerPlaying)
             else if (playerPlaying == 2)
                 this->board[position][lastBlank]=this->playerTwoColor;           
             cout<<"--player color added to column successfully"<<endl;           
-            
+            break;
         /*if command is remove*/
         case 'R':
             /*if we have more then 1 color at the column */
