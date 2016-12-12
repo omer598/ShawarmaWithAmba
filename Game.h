@@ -29,6 +29,7 @@ class Game
         int checkEndGame();
         void updateBoard(int,char,int);
         void printBoard();
+        void returnBoard(char *);
         
         
 };
