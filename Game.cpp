@@ -37,6 +37,15 @@ Game::~Game(){
         delete [] this->board[p];
     delete [] this->board;  
 }
+void Game::returnBoard(char * buff){
+    int k=0;
+    for (int p = 0; p < lines; p++)
+        for(int j=0; j<columns;j++){
+            buff[k]=this->board[p][j];    
+            k++;
+        }
+    buff[k]='\0';
+}
 void Game::printBoard()
 {
     char sideBar = '|';
