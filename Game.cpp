@@ -29,7 +29,6 @@ Game::Game(char p1c, char p2c){
         for(int j=0; j<lines;j++) 
             this->board[p][j]='*';
     /*setting starting player*/
-    //this->playerPlaying=playerStarting;
     this->playerOneColor=p1c;
     this->playerTwoColor=p2c;
 }
@@ -38,81 +37,74 @@ Game::~Game(){
         delete [] this->board[p];
     delete [] this->board;  
 }
-
 void Game::printBoard()
 {
-	char sideBar = '|';
-	char lowBar = '_';
-	int k = 0;
-	//clearScreen();
-	int y_axis = 3;
-	int x_axis = 3;
-	//gotoxy(x_axis,y_axis);
-	cout << "Player 1 color: " << this->playerOneColor<< endl << "Player 2 color:" <<this->playerTwoColor<<endl;
-	cout << endl << endl << endl;
-	cout << "\t" << "╔";
-	for (int k = 0; k < columns * 2-1; k++)
-		if (k%2)
-			cout << "╦";
-		else
-			cout << "   ";
-	cout << "╗" << endl;
-	//gotoxy(x_axis,++y_axis);
+    char sideBar = '|';
+    char lowBar = '_';
+    int k = 0;
+    int y_axis = 3;
+    int x_axis = 3;
+    cout << "Player 1 color: " << this->playerOneColor<< endl << "Player 2 color:" <<this->playerTwoColor<<endl;
+    cout << endl << endl << endl;
+    cout << "\t" << "╔";
+    for (int k = 0; k < columns * 2-1; k++)
+            if (k%2)
+                    cout << "╦";
+            else
+                    cout << "   ";
+    cout << "╗" << endl;
+    for (int i = 0; i<lines*2-1; i++)
+    {
+        if (i%2)
+        {
+            cout << "\t" << "╠"; //<< underline;
+            for (int j = 0; j < columns*2-1; j++)
+            {
+                    if (j%2)
+                            cout << "╬";
+                    else if (j != (columns*2 - 1))
+                            cout << "═══";
 
-	for (int i = 0; i<lines*2-1; i++)
-	{
-		if (i%2)
-		{
-			cout << "\t" << "╠"; //<< underline;
-			for (int j = 0; j < columns*2-1; j++)
-			{
-				if (j%2)
-					cout << "╬";
-				else if (j != (columns*2 - 1))
-					cout << "═══";
+            }
+            cout << "╣" << endl;//"\33[0m" << "║" << endl;
 
-			}
-			cout << "╣" << endl;//"\33[0m" << "║" << endl;
+        }
+        else
+        {
+            cout << "\t" << "║" << " "; //<< underline;
+            for (int j = 0; j < columns; j++)
+            {
+                    switch(this->board[j][i/2]){
+                    case 'R':
+                            cout << RED << "●" << NoColor;
+                            break;
+                    case 'B':
+                            cout << BLUE << "●" << NoColor;
+                            break;
+                    default:
+                            cout << this->board[j][i/2];
+                            break;
+                    }
+                    //cout  << this->board[i/2][j];
+                    if (j != (columns - 1))
+                            cout << " ║ ";
 
-		}
-		else
-		{
-			cout << "\t" << "║" << " "; //<< underline;
-			for (int j = 0; j < columns; j++)
-			{
-				switch(this->board[j][i/2]){
-				case 'R':
-					cout << RED << "●" << NoColor;
-					break;
-				case 'B':
-					cout << BLUE << "●" << NoColor;
-					break;
-				default:
-					cout << this->board[j][i/2];
-					break;
-				}
-				//cout  << this->board[i/2][j];
-				if (j != (columns - 1))
-					cout << " ║ ";
-
-			}
-			cout << " ║" << endl;//"\33[0m" << "║" << endl;
-		}
-		//gotoxy(x_axis,++y_axis);
-	}
-
-	cout << "\t" << "╚";
-	for (int k = 0; k < columns * 2-1; k++)
-		if (k%2)
-			cout << "╩";
-		else
-			cout << "═══";
-	cout << "╝" << endl;
+            }
+            cout << " ║" << endl;//"\33[0m" << "║" << endl;
+        }
+    }
+    cout << "\t" << "╚";
+    for (int k = 0; k < columns * 2-1; k++)
+            if (k%2)
+                    cout << "╩";
+            else
+                    cout << "═══";
+    cout << "╝" << endl;
 }
 /*private method that checks if we have a 4 match
  option variable : 1-down, 2-left, 3-left and down (diagonal), 4-left and up (diagonal)
  returns true if we had a 4 match*/
- bool Game::checkFour(int option,int row,int col){
+ bool Game::checkFour(int option,int col,int row){
      char toChk=this->board[col][row];
      bool flag=false;
      int index,index2;
@@ -123,7 +115,7 @@ void Game::printBoard()
                  if(this->board[col][index]!= toChk)
                      break;
              }
-             if(index==row+3)
+             if(index-1==row+3)
                  flag=true;
              break;
          /*check 4 left*/
@@ -131,7 +123,7 @@ void Game::printBoard()
              for(index=col+1;index <= col+3;index++)
                  if(this->board[index][row]!= toChk)
                      break;
-             if(index==col+3)
+             if(index-1==col+3)
                  flag=true;             
              break;
          /*check 4 diagonal (left and down)*/
@@ -157,7 +149,7 @@ void Game::printBoard()
                  index--;
                  index2++;
              }
-             if ((index==row-3) && (index2 == col+3))
+             if ((index+1==row-3) && (index2-1 == col+3))
                  flag=true;             
              break;
          default:
@@ -170,18 +162,22 @@ void Game::printBoard()
 int Game::checkEndGame(){
     int flag=0;
     char check;
-    for(int i=0;i<lines;i++){
-        for(int j=0;j<columns;j++){
-            check=this->board[i][j];
+    for(int j=0;j<columns;j++){
+        if(flag==1)
+            break;
+        for(int i=0;i<lines;i++){
+            check=this->board[j][i];
+            if(check =='*')
+                continue;
             if(j <= 3){
                 if(i<=2){
-                    if(checkFour(1,i,j) || checkFour(3,i,j)){
+                    if(checkFour(1,j,i) || checkFour(2,j,i)|| checkFour(3,j,i)){
                         flag=1;
                         break;
                     }
                 }
                 else{
-                    if(checkFour(4,i,j)){
+                    if(checkFour(4,j,i)||checkFour(2,j,i)){
                         flag=1;
                         break;
                     }
@@ -190,7 +186,7 @@ int Game::checkEndGame(){
             }
             else{
                 if(i<=2){
-                    if(checkFour(2,i,j)){
+                    if(checkFour(1,j,i)){
                         flag=1;
                         break;
                     }

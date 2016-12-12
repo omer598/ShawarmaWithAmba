@@ -17,12 +17,13 @@
 class Game
 {
     private:
-        char ** board;
+        //char ** board;
         //int playerPlaying;
         char playerOneColor;
         char playerTwoColor;
         bool checkFour(int,int,int);
     public:
+        char ** board;
         Game(char,char);
         ~Game();
         int checkEndGame();
