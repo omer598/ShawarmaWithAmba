@@ -14,9 +14,12 @@
 #include <cstdio>
 #include <string.h>
 #include "Player.h"
+#include "Game.h"
+
 
 #define lines 6
 #define coloumns 7
+#define clearScreen() (cout << "\033[H\033[J")
 using namespace std;
 
 /*struck for socket data*/
@@ -29,9 +32,14 @@ struct sockaddr_serverIn{
 struct user_data{
 
 };
+
+Player u1, u2;
+char buffer[1024] = { '\0' };
+char board[lines*coloumns];
+
 void nullTheArray(char * buffer)
 {
-	for (int i = 0; i<sizeof(buffer); i++)
+	for (int i = 0; i<1024; i++)
 		buffer[i] = '\0';
 }
 
@@ -53,17 +61,33 @@ void initBoard(char* board)
 		board[p] = '*';
 }
 
+void updateBoards(Game& g)
+{
+	sprintf(buffer, "%s", "U");
+	send(u1.getID(), buffer, sizeof(buffer), 0);
+	send(u2.getID(), buffer, sizeof(buffer), 0);
+	nullTheArray(buffer);
+	//strcpy(buffer, board);
+	g.returnBoard(buffer);
+	g.printBoard();
+	cout << buffer << endl;
+	send(u1.getID(), buffer, sizeof(buffer), 0);
+	send(u2.getID(), buffer, sizeof(buffer), 0);
+	nullTheArray(buffer);
+}
+
 int main()
 {
+	clearScreen();
 	/*variables*/
-	Player u1, u2;
-        string tmp;
+    string tmp;
 	int sock;
-	char buffer[1024] = { '\0' };
 	int firstPlayer;
 	unsigned int len;
-	char board[lines*coloumns];
 	initBoard(board);
+	int endGameFlag = 0;
+	int playerTurn;
+	string s;
 	/*buffer for messages and data*/
 	/*define socket data for both server and client*/
 	struct sockaddr_in serv, client;
@@ -101,7 +125,7 @@ int main()
 	cout << "--nickname selection sent to user 1, waiting for nick input" << endl;
 	send(u1.getID(), buffer, sizeof(buffer), 0);
 	recv(u1.getID(), buffer, sizeof(buffer), 0);
-        tmp.assign(buffer);
+    tmp.assign(buffer);
 	u1.setUN(tmp);
 	cout << "--player 1 nickname: " << u1.getUN() << endl;
 
@@ -198,17 +222,9 @@ int main()
 	firstPlayer = u1.getStartBit() ^ u2.getStartBit();
 
 
+	Game g1(u1.getColor(), u2.getColor());
 	//Start game screen
-	sprintf(buffer, "%s", "U");
-	send(u1.getID(), buffer, sizeof(buffer), 0);
-	send(u2.getID(), buffer, sizeof(buffer), 0);
-	nullTheArray(buffer);
-	strcpy(buffer, board);
-	send(u1.getID(), buffer, sizeof(buffer), 0);
-	send(u2.getID(), buffer, sizeof(buffer), 0);
-	nullTheArray(buffer);
-
-
+	updateBoards(g1);
 	//Print all players data -- server side
 	cout << "--users data" << endl;
 	cout << endl << "  user 1:" << endl << "  client id: " << u1.getID() << " nickname: " <<
@@ -228,6 +244,73 @@ int main()
 	sprintf(buffer, "You are playing against: %s ,your color is: %c\nPlayer %d starts\nGood Luck", (char*)u1.getUN().c_str(), u2.getColor(), (1 + firstPlayer));
 	send(u2.getID(), buffer, sizeof(buffer), 0);
 	nullTheArray(buffer);
+
+	endGameFlag = 0;
+	playerTurn = firstPlayer;
+	while(!endGameFlag){
+		if (playerTurn) { //2nd player turn
+			sprintf(buffer, "%s", "T");
+			send(u2.getID(), buffer, sizeof(buffer), 0);
+			nullTheArray(buffer);
+			recv(u2.getID(), buffer, sizeof(buffer), 0);
+			cout << buffer[0] << ' ' <<buffer[1]-'0' << ' ' << buffer[3] << ' ' << playerTurn+1 << endl;
+			switch (buffer[0]){
+				case 'N': //receive a move
+					g1.updateBoard(buffer[1]-'0',buffer[3],playerTurn+1);
+					updateBoards(g1);
+					break;
+				case 'C': //receive a chat massage
+					s = string(buffer).erase(0,1);
+					s.insert(0,"--Chat from Player 2: ");
+					cout << s << endl;
+					s.insert(0,"C");
+					nullTheArray(buffer);
+					s.copy(buffer,s.size(),0);
+					cout << "B: " << buffer <<endl;
+					send(u1.getID(), buffer, sizeof(buffer), 0);
+					//send(u2.getID(), buffer, sizeof(buffer), 0);
+					break;
+				case 'F': //End of turn
+					playerTurn = 0;
+					break;
+				default:
+					break;
+			}
+			endGameFlag = g1.checkEndGame();
+		}
+		else { //1st player turn
+			sprintf(buffer, "%s", "T");
+			send(u1.getID(), buffer, sizeof(buffer), 0);
+			nullTheArray(buffer);
+			recv(u1.getID(), buffer, sizeof(buffer), 0);
+			cout << buffer[0] << ' ' <<buffer[1]-'0' << ' ' << buffer[3] << ' ' << playerTurn+1 << endl;
+			switch (buffer[0]){
+				case 'N': //receive a move
+					g1.updateBoard(buffer[1]-'0',buffer[3],playerTurn+1);
+					updateBoards(g1);
+					break;
+				case 'C': //receive a chat massage
+					s = string(buffer).erase(0,1);
+					s.insert(0,"--Chat from Player 1: ");
+					cout << s << endl;
+					s.insert(0,"C");
+					nullTheArray(buffer);
+					s.copy(buffer,s.size(),0);
+					cout << "B: " << buffer <<endl;
+					//send(u1.getID(), buffer, sizeof(buffer), 0);
+					send(u2.getID(), buffer, sizeof(buffer), 0);
+					break;
+				case 'F': //End of turn
+					playerTurn = 1;
+					break;
+				default:
+					break;
+			}
+
+		}
+		endGameFlag = g1.checkEndGame();
+
+	}
         
 	//while (checkIfWon()) - need to put inf loop until some1 wins..
 	sprintf(buffer,"please select a column:\n");

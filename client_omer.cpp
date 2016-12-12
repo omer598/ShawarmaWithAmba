@@ -13,7 +13,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <string.h>
 
 using namespace std;
 #define lines 6
@@ -124,20 +123,9 @@ void printBoard(char** msg)
 
 }
 
-int printMenu() {
-	int num;
-	cout << "i.\tmake a move (only once per turn)." << endl;
-	cout << "ii.\twrite a message to the other player." << endl;
-	cout << "iii.\tend the turn (only after making a move!!)." << endl;
-	cin >> num;
-	return num;
-}
-
 int main()
 {
-	clearScreen();
 	int sock, portNum;
-	string s;
 	char buffer[1024] = { '\0' };
 	char** board;
 	board = new char*[lines];
@@ -188,46 +176,6 @@ int main()
 			recv(sock, buffer, sizeof(buffer), 0);
 			cout << "Game info: " << endl << buffer << endl;
 		}
-		else if (buffer[0] == 'T')
-		{
-			string s;
-			switch (printMenu()){
-				case 1: //send a move
-					//TODO: check if valid move before sending it
-					cout << "Please enter a move: column,'A'/'R'\n";
-					getline(cin,s);
-					getline(cin,s);
-					s.insert(0, "N");
-					nullTheArray(buffer);
-					s.copy(buffer,s.size(),0);
-					cout <<"Buffer is: " << buffer << endl;
-					send(sock, buffer, sizeof(buffer), 0);
-					break;
-				case 2: //chat massage
-					getline(cin,s);
-					getline(cin,s);
-					s.insert(0, "C");
-					nullTheArray(buffer);
-					s.copy(buffer,s.size(),0);
-					//s.assign(buffer);
-					send(sock, buffer, sizeof(buffer), 0);
-					break;
-				case 3: //End of turn
-					buffer[0] = 'F';
-					send(sock, buffer, sizeof(buffer), 0);
-					break;
-				default:
-					break;
-			}
-		}
-		else if (buffer[0] == 'C')
-		{
-			s.assign(buffer);
-			s.erase(0,1);
-			cout << s << endl;
-			nullTheArray(buffer);
-		}
-
 	}
 	/*TODO: insert xor for choose start player*/
 

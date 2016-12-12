@@ -41,7 +41,7 @@ void Game::returnBoard(char * buff){
     int k=0;
     for (int p = 0; p < lines; p++)
         for(int j=0; j<columns;j++){
-            buff[k]=this->board[p][j];    
+            buff[k]=this->board[j][p];
             k++;
         }
     buff[k]='\0';
