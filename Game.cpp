@@ -46,6 +46,9 @@ void Game::returnBoard(char * buff){
         }
     buff[k]='\0';
 }
+char ** Game::getBoard(){
+	return this->board;
+}
 void Game::printBoard()
 {
     char sideBar = '|';

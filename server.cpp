@@ -256,8 +256,15 @@ int main()
 			cout << buffer[0] << ' ' <<buffer[1]-'0' << ' ' << buffer[3] << ' ' << playerTurn+1 << endl;
 			switch (buffer[0]){
 				case 'N': //receive a move
-					g1.updateBoard(buffer[1]-'0',buffer[3],playerTurn+1);
-					updateBoards(g1);
+					if((buffer[3] == 'A' && g1.getBoard()[buffer[1]-'0'][0] != '*')||(buffer[3]=='R' && g1.getBoard()[buffer[1]-'0'][5] != u2.getColor())){
+						nullTheArray(buffer);
+						sprintf(buffer,"TT");
+						send(u2.getID(), buffer, sizeof(buffer), 0);
+					}
+					else{
+						g1.updateBoard(buffer[1]-'0',buffer[3],playerTurn+1);
+						updateBoards(g1);
+					}
 					break;
 				case 'C': //receive a chat massage
 					s = string(buffer).erase(0,1);
@@ -286,8 +293,15 @@ int main()
 			cout << buffer[0] << ' ' <<buffer[1]-'0' << ' ' << buffer[3] << ' ' << playerTurn+1 << endl;
 			switch (buffer[0]){
 				case 'N': //receive a move
-					g1.updateBoard(buffer[1]-'0',buffer[3],playerTurn+1);
-					updateBoards(g1);
+					if((buffer[3] == 'A' && g1.getBoard()[buffer[1]-'0'][0] != '*')||(buffer[3]=='R' && g1.getBoard()[buffer[1]-'0'][5] != u1.getColor())){
+						nullTheArray(buffer);
+						sprintf(buffer,"TT");
+						send(u1.getID(), buffer, sizeof(buffer), 0);
+					}
+					else{
+						g1.updateBoard(buffer[1]-'0',buffer[3],playerTurn+1);
+						updateBoards(g1);
+					}
 					break;
 				case 'C': //receive a chat massage
 					s = string(buffer).erase(0,1);

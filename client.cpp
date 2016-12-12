@@ -191,6 +191,8 @@ int main()
 		else if (buffer[0] == 'T')
 		{
 			string s;
+			if (buffer[1]=='T')
+				cout << "invalid selection" << endl;
 			switch (printMenu()){
 				case 1: //send a move
 					//TODO: check if valid move before sending it

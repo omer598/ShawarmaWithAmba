@@ -30,7 +30,7 @@ class Game
         void updateBoard(int,char,int);
         void printBoard();
         void returnBoard(char * buff);
-        
+        char ** getBoard();
 };
 
 #endif /* GAME_H */
