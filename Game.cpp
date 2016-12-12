@@ -144,8 +144,8 @@ void Game::updateBoard(int position, char addORremove,int playerPlaying)
 {
     int lastBlank=0;
     /*searching for first position in column which the last blank*/
-    while((this->board[position][lastBlank + 7]=='*') && (lastBlank < lines))
-        lastBlank+=7;
+    while((this->board[position][lastBlank + 1]=='*') && (lastBlank < lines))
+        lastBlank+=1;
     
     switch(addORremove){
         /*if command was add*/
@@ -167,7 +167,7 @@ void Game::updateBoard(int position, char addORremove,int playerPlaying)
                     this->board[position][p+1]=this->board[position][p];
             }
             /*nulling the first position which hasn't been '*' */
-            this->board[lastBlank+1]='*';
+            this->board[position][lastBlank+1]='*';
             cout<<"--player color removed from column successfully"<<endl;
             break;
         /*if command is not correct*/    
