@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <stdlib.h>
 
 using namespace std;
 #define lines 6
@@ -40,16 +41,15 @@ void nullTheArray(char * buffer)
 
 void updateBoard(char* buffer, char** board)
 {
-	int k = 0;
-	for (int i = 0; i<lines; i++)
+	int k = 1;
+	for (int i = 0; i< lines; i++)
 	{
-		for (int j = 0; j<coloumns; j++)
+		for (int j = 0; j< coloumns; j++)
 		{
 			board[i][j] = buffer[k];
 			k++;
 		}
 	}
-
 }
 
 void printBoard(char** msg)
@@ -132,8 +132,16 @@ int printMenu() {
 	cin >> num;
 	return num;
 }
+/*clears first char from msg
+void getClearMsg(char * buffer){
+    string s;
+    s.assign(buffer);
+    s.erase(0,1);
+    s.copy(buffer,s.size(),0);
+    buffer[s.size()]='\0';
+}*/
 
-int main()
+int main(int argc,char * argv [])
 {
 	clearScreen();
 	int sock, portNum;
@@ -143,8 +151,8 @@ int main()
 	board = new char*[lines];
 	for (int p = 0; p<lines; p++)
 		board[p] = new char[coloumns];
-	portNum = 11111;
 	sock = socket(PF_INET, SOCK_STREAM, 0);
+	int port = atoi(argv[2]);
 	if (sock<0)
 	{
 		cout << "Error establish socket" << endl;
@@ -152,8 +160,8 @@ int main()
 	}
 	struct sockaddr_in server_addr;
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(65535);
-	server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	server_addr.sin_port = htons(port);
+	server_addr.sin_addr.s_addr = inet_addr(argv[1]);
 	connect(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr_in));
 	//Receives first massage (ip back!)
 	recv(sock, buffer, sizeof(buffer), 0);
@@ -163,65 +171,72 @@ int main()
 	nullTheArray(buffer);
 	cin >> buffer;
 	send(sock, buffer, sizeof(buffer), 0);
-	//recv(sock,buffer,sizeof(buffer),0);
+        buffer[0]='A';
+        /*E- end game command (if server found a winner)*/
 	while (buffer[0] != 'E')
 	{
 		recv(sock, buffer, sizeof(buffer), 0);
-		if (buffer[0] == 'I') //Input from client
+		if (buffer[0] == 'I') /*I- command that gets input from client*/
 		{
-			recv(sock, buffer, sizeof(buffer), 0);
-			cout << buffer << endl;
+                        //getClearMsg(buffer);
+			cout << buffer+1 << endl;
 			nullTheArray(buffer);
 			cin >> buffer;
 			send(sock, buffer, sizeof(buffer), 0);
-			//recv(sock,buffer,sizeof(buffer),0);
 		}
-		else if (buffer[0] == 'U') //Update board and update printed board
+		else if (buffer[0] == 'U') /*U- update board user side and print it*/
 		{
-			recv(sock, buffer, sizeof(buffer), 0);
-			updateBoard(buffer, board);
+                        //getClearMsg(buffer);
+            cout << buffer+1 << endl;
+			updateBoard(buffer+1, board);
 			printBoard(board);
 		}
-		else if (buffer[0] == 'M') //server massage
+		else if (buffer[0] == 'M') /*sys massage- prints game info*/
 		{
 			/*receives game info*/
 			recv(sock, buffer, sizeof(buffer), 0);
 			cout << "Game info: " << endl << buffer << endl;
 		}
+                /*T - game play, commands from server in game*/
 		else if (buffer[0] == 'T')
 		{
 			string s;
+                        /*if we got second T we had error. printing the error*/
 			if (buffer[1]=='T')
-				cout << "invalid selection" << endl;
-			switch (printMenu()){
-				case 1: //send a move
-					//TODO: check if valid move before sending it
-					cout << "Please enter a move: column,'A'/'R'\n";
-					getline(cin,s);
-					getline(cin,s);
-					s.insert(0, "N");
-					nullTheArray(buffer);
-					s.copy(buffer,s.size(),0);
-					cout <<"Buffer is: " << buffer << endl;
-					send(sock, buffer, sizeof(buffer), 0);
-					break;
-				case 2: //chat massage
-					getline(cin,s);
-					getline(cin,s);
-					s.insert(0, "C");
-					nullTheArray(buffer);
-					s.copy(buffer,s.size(),0);
-					//s.assign(buffer);
-					send(sock, buffer, sizeof(buffer), 0);
-					break;
-				case 3: //End of turn
-					buffer[0] = 'F';
-					send(sock, buffer, sizeof(buffer), 0);
-					break;
-				default:
-					break;
+			{
+				//getClearMsg(buffer);
+				//getClearMsg(buffer);
+				cout << buffer+2 << endl;
+			} else {
+				switch (printMenu()){
+					case 1: /*move sending, receiving command (column, A/R) and sending to server in
+											 order to check if valid*/
+						cout << "Please enter a move: column,'A'/'R'\n";
+						getline(cin,s);
+						getline(cin,s);
+						s.insert(0, "N");
+						nullTheArray(buffer);
+						s.copy(buffer,s.size(),0);
+						send(sock, buffer, sizeof(buffer), 0);
+						break;
+					case 2: /*sending of chat. getting the massage and setting first char to be C (symbol of massage sending)*/
+						getline(cin,s);
+						getline(cin,s);
+						s.insert(0, "C");
+						nullTheArray(buffer);
+						s.copy(buffer,s.size(),0);
+						send(sock, buffer, sizeof(buffer), 0);
+						break;
+					case 3: /*End of turn, sets first cell to F (symbol of end of turn)*/
+						buffer[0] = 'F';
+						send(sock, buffer, sizeof(buffer), 0);
+						break;
+					default:
+						break;
+				}
 			}
 		}
+                /*C is chat massage from other user. prints it*/
 		else if (buffer[0] == 'C')
 		{
 			s.assign(buffer);
@@ -231,11 +246,12 @@ int main()
 		}
 
 	}
-	/*TODO: insert xor for choose start player*/
 
 	//recv(sock,buffer,sizeof(buffer),0);
-	//cout<<endl<<buffer<<endl;
-
+        /*delete dynamic allocations!!!*/
+        for (int p = 0; p<lines; p++)
+            delete [] board[p];
+        delete[] board;
 	cout << "The game is over." << endl;
 	close(sock);
 	cout << "Socket closed!" << endl;
