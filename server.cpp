@@ -13,12 +13,14 @@
 #include <netinet/in.h>
 #include <cstdio>
 #include <string.h>
+#include <stdlib.h>
 #include "Player.h"
 #include "Game.h"
 
 
 #define lines 6
 #define coloumns 7
+#define bufferSize 1024
 #define clearScreen() (cout << "\033[H\033[J")
 using namespace std;
 
@@ -29,17 +31,10 @@ struct sockaddr_serverIn{
 	struct in_addr sin_addr;
 	char sin_zero[8];
 };
-struct user_data{
-
-};
-
-Player u1, u2;
-char buffer[1024] = { '\0' };
-char board[lines*coloumns];
 
 void nullTheArray(char * buffer)
 {
-	for (int i = 0; i<1024; i++)
+	for (int i = 0; i<bufferSize; i++)
 		buffer[i] = '\0';
 }
 
@@ -49,44 +44,43 @@ void printArray(char * array, int size)
 		cout << array[i];
 	cout << endl;
 }
-
-void startConnection(int* sock, char* buffer, sockaddr_in* serv, sockaddr_in* client, user_data * u1, user_data* u2)
+/*put first char to Msg*/
+void getMsgReady(char c,char * buffer)
 {
-
+    string s; 
+    s.assign(buffer);
+    s.insert(0,&c);
+    s.copy(buffer,s.size(),0);
 }
-
-void initBoard(char* board)
+/*updates board (to print) and send to each user*/
+void updateBoards(Game * g, char * buffer, Player * u1, Player * u2)
 {
-	for (int p = 0; p < lines*coloumns; p++)
-		board[p] = '*';
-}
-
-void updateBoards(Game& g)
-{
-	sprintf(buffer, "%s", "U");
-	send(u1.getID(), buffer, sizeof(buffer), 0);
-	send(u2.getID(), buffer, sizeof(buffer), 0);
-	nullTheArray(buffer);
-	//strcpy(buffer, board);
-	g.returnBoard(buffer);
-	g.printBoard();
-	cout << buffer << endl;
-	send(u1.getID(), buffer, sizeof(buffer), 0);
-	send(u2.getID(), buffer, sizeof(buffer), 0);
+	//nullTheArray(buffer);
+	g->returnBoard(buffer);
+	g->printBoard();
+        getMsgReady('U',buffer);
+        //cout <<"the buffer"<<endl<<buffer << endl;
+	send(u1->getID(), buffer, bufferSize, 0);
+        //cout <<"the buffer after 1"<<endl<<buffer << endl;
+	send(u2->getID(), buffer, bufferSize, 0);
+        //cout <<"the buffer after 2"<<endl<<buffer << endl;
 	nullTheArray(buffer);
 }
 
-int main()
+int main(int argc, char * argv[])
 {
 	clearScreen();
 	/*variables*/
-    string tmp;
+        string tmp;
+        Player u1, u2;
+        char buffer[1024] = { '\0' };
+        char board[lines*coloumns];
 	int sock;
-	int firstPlayer;
+	int firstPlayer,playerPlayed=0;
 	unsigned int len;
-	initBoard(board);
 	int endGameFlag = 0;
 	int playerTurn;
+	int port = atoi(argv[1]);
 	string s;
 	/*buffer for messages and data*/
 	/*define socket data for both server and client*/
@@ -101,7 +95,7 @@ int main()
 	}
 	/*sets server socket (to listen) data*/
 	serv.sin_family = AF_INET;
-	serv.sin_port = htons(65535);
+	serv.sin_port = htons(port);
 	serv.sin_addr.s_addr = INADDR_ANY;
 	len = sizeof(struct sockaddr_in);
 	/*binding port to listen*/
@@ -125,7 +119,7 @@ int main()
 	cout << "--nickname selection sent to user 1, waiting for nick input" << endl;
 	send(u1.getID(), buffer, sizeof(buffer), 0);
 	recv(u1.getID(), buffer, sizeof(buffer), 0);
-    tmp.assign(buffer);
+        tmp.assign(buffer);
 	u1.setUN(tmp);
 	cout << "--player 1 nickname: " << u1.getUN() << endl;
 
@@ -149,10 +143,8 @@ int main()
 	do{
 		nullTheArray(buffer);
 		//this command will be sent to user 1 only
-		sprintf(buffer, "%s", "I");
-		send(u1.getID(), buffer, sizeof(buffer), 0);
-		nullTheArray(buffer);
 		sprintf(buffer, "%s", "please insert color (R or B only):");
+                getMsgReady('I',buffer);
 		send(u1.getID(), buffer, sizeof(buffer), 0);
 		recv(u1.getID(), buffer, sizeof(buffer), 0);
 		//command to u1 only end here
@@ -178,41 +170,36 @@ int main()
 
 	//Player choose a bit and server XORs the bits and chooses who starts the game
 	nullTheArray(buffer);
-	//this command will be sent to user 1 only
-	sprintf(buffer, "%s", "I");
-	send(u1.getID(), buffer, sizeof(buffer), 0);
-	send(u2.getID(), buffer, sizeof(buffer), 0);
-	nullTheArray(buffer);
 	sprintf(buffer, "%s", "please choose 1 or 0");
+        getMsgReady('I',buffer);
 	send(u1.getID(), buffer, sizeof(buffer), 0);
 	send(u2.getID(), buffer, sizeof(buffer), 0);
 
 	//receive player one XOR bit
-	buffer[1] = '\0';
+	//buffer[1] = '\0';
 	recv(u1.getID(), buffer, sizeof(buffer), 0);
 	u1.setStartBit (buffer[0]);
 	while (((u1.getStartBit () != '0') && (u1.getStartBit () != '1')) || buffer[1] != '\0')
-	{
-		sprintf(buffer, "%s", "I");
-		send(u1.getID(), buffer, sizeof(buffer), 0);
+	{       
 		sprintf(buffer, "%s", "Choose a valid value (0 or 1)\n");
+                getMsgReady('I',buffer);
 		send(u1.getID(), buffer, sizeof(buffer), 0);
-		buffer[1] = '\0';
+		//buffer[1] = '\0';
 		recv(u1.getID(), buffer, sizeof(buffer), 0);
 		u1.setStartBit(buffer[0]);
 	}
 
 	//receive player 2 XOR bit
-	buffer[1] = '\0';
+	//buffer[1] = '\0';
 	recv(u2.getID(), buffer, sizeof(buffer), 0);
 	u2.setStartBit (buffer[0]);
 	while (((u2.getStartBit() != '0') && (u2.getStartBit() != '1')) || buffer[1] != '\0')
 	{
-		sprintf(buffer, "%s", "I");
-		send(u2.getID(), buffer, sizeof(buffer), 0);
+                
 		sprintf(buffer, "%s", "Choose a valid value (0 or 1)\n");
+                getMsgReady('I',buffer);
 		send(u2.getID(), buffer, sizeof(buffer), 0);
-		buffer[1] = '\0';
+		//buffer[1] = '\0';
 		recv(u2.getID(), buffer, sizeof(buffer), 0);
 		u2.setStartBit (buffer[0]);
 	}
@@ -224,7 +211,7 @@ int main()
 
 	Game g1(u1.getColor(), u2.getColor());
 	//Start game screen
-	updateBoards(g1);
+	updateBoards(&g1,buffer,&u1,&u2); /////////PO!!!!!!!!/////////////
 	//Print all players data -- server side
 	cout << "--users data" << endl;
 	cout << endl << "  user 1:" << endl << "  client id: " << u1.getID() << " nickname: " <<
@@ -253,17 +240,26 @@ int main()
 			send(u2.getID(), buffer, sizeof(buffer), 0);
 			nullTheArray(buffer);
 			recv(u2.getID(), buffer, sizeof(buffer), 0);
-			cout << buffer[0] << ' ' <<buffer[1]-'0' << ' ' << buffer[3] << ' ' << playerTurn+1 << endl;
+			//cout << buffer[0] << ' ' <<buffer[1]-'0' << ' ' << buffer[3] << ' ' << playerTurn+1 << endl;
 			switch (buffer[0]){
 				case 'N': //receive a move
-					if((buffer[3] == 'A' && g1.getBoard()[buffer[1]-'0'][0] != '*')||(buffer[3]=='R' && g1.getBoard()[buffer[1]-'0'][5] != u2.getColor())){
+					if((buffer[3] == 'A' && g1.getBoard()[buffer[1]-'0'][0] != '*')||(buffer[3]=='R' && g1.getBoard()[buffer[1]-'0'][5] != u2.getColor()))
+					{
 						nullTheArray(buffer);
-						sprintf(buffer,"TT");
+						sprintf(buffer,"TT\ninvalid cell, select another\n");
 						send(u2.getID(), buffer, sizeof(buffer), 0);
 					}
-					else{
+					else if (playerPlayed) {
+						cout << "Player " << 1+playerTurn << "played" << endl;
+						nullTheArray(buffer);
+						sprintf(buffer,"TTyou are now allowed to play again. select another option");
+						send(u2.getID(), buffer, sizeof(buffer), 0);
+						updateBoards(&g1,buffer,&u1,&u2);
+					}
+					else {
 						g1.updateBoard(buffer[1]-'0',buffer[3],playerTurn+1);
-						updateBoards(g1);
+						updateBoards(&g1,buffer,&u1,&u2);
+						playerPlayed=1;
 					}
 					break;
 				case 'C': //receive a chat massage
@@ -278,7 +274,18 @@ int main()
 					//send(u2.getID(), buffer, sizeof(buffer), 0);
 					break;
 				case 'F': //End of turn
-					playerTurn = 0;
+				   if(!playerPlayed){
+						cout << "--info: Player didn't make any move" << endl;
+						nullTheArray(buffer);
+						sprintf(buffer,"TTplease make a move before ending your turn!");
+						send(u2.getID(), buffer, sizeof(buffer), 0);
+						//updateBoards(&g1,buffer,&u1,&u2);
+					}
+					else{
+						cout << "--info: Player 2 has made a move and moving to player 1" << endl;
+						playerPlayed = 0;
+						playerTurn = 0;
+					}
 					break;
 				default:
 					break;
@@ -286,6 +293,8 @@ int main()
 			endGameFlag = g1.checkEndGame();
 		}
 		else { //1st player turn
+            cout<<"now player 1"<<endl;
+			nullTheArray(buffer);
 			sprintf(buffer, "%s", "T");
 			send(u1.getID(), buffer, sizeof(buffer), 0);
 			nullTheArray(buffer);
@@ -295,12 +304,21 @@ int main()
 				case 'N': //receive a move
 					if((buffer[3] == 'A' && g1.getBoard()[buffer[1]-'0'][0] != '*')||(buffer[3]=='R' && g1.getBoard()[buffer[1]-'0'][5] != u1.getColor())){
 						nullTheArray(buffer);
-						sprintf(buffer,"TT");
+						sprintf(buffer,"TT\ninvalid cell, select another!\n");
 						send(u1.getID(), buffer, sizeof(buffer), 0);
+					}
+					else if (playerPlayed)
+					{
+						cout << "--info: Player " << 1+playerTurn << "played" << endl;
+					nullTheArray(buffer);
+					sprintf(buffer,"TT\nyou are not allowed to play again.\nselect another option!\n");
+					send(u1.getID(), buffer, sizeof(buffer), 0);
+					updateBoards(&g1,buffer,&u1,&u2);
 					}
 					else{
 						g1.updateBoard(buffer[1]-'0',buffer[3],playerTurn+1);
-						updateBoards(g1);
+						updateBoards(&g1,buffer,&u1,&u2);
+                                                playerPlayed=1;
 					}
 					break;
 				case 'C': //receive a chat massage
@@ -315,7 +333,21 @@ int main()
 					send(u2.getID(), buffer, sizeof(buffer), 0);
 					break;
 				case 'F': //End of turn
-					playerTurn = 1;
+					/*checks if player mad a move before ending turn. if not sending error*/
+					if(!playerPlayed){
+						cout << "--info: player didn't make any move" << endl;
+						nullTheArray(buffer);
+						sprintf(buffer,"TT\nyou are not allowed to play again.\nselect another option!\n");
+						send(u1.getID(), buffer, sizeof(buffer), 0);
+						//updateBoards(&g1,buffer,&u1,&u2);
+					}
+					/*if player played his turn setting flag to next player*/
+					else{
+						cout << "--info: Player 1 has made a move and moving to player 2" << endl;
+						nullTheArray(buffer);
+						playerPlayed = 0;
+						playerTurn = 1;
+					}
 					break;
 				default:
 					break;
@@ -327,10 +359,10 @@ int main()
 	}
         
 	//while (checkIfWon()) - need to put inf loop until some1 wins..
-	sprintf(buffer,"please select a column:\n");
+	//sprintf(buffer,"please select a column:\n");
 	//maybe needs to be u2.. we need to check who wins first
-	send(u1.getID(),buffer,sizeof(buffer), 0);
-	nullTheArray(buffer);
+	//send(u1.getID(),buffer,sizeof(buffer), 0);
+	//nullTheArray(buffer);
 	
 	//send an end game message to both players
 	sprintf(buffer, "%s", "E");
