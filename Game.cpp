@@ -171,15 +171,15 @@ void Game::printBoard()
 }
 /*runs all over the board and checks winning condition for each cell.
  if winning condition is true returning the winning player(8*n^2)*/
-int Game::checkEndGame(){
+int Game::checkEndGame(char color){
     int flag=0;
-    char check;
+    //char check;
     for(int j=0;j<columns;j++){
         if(flag==1)
             break;
         for(int i=0;i<lines;i++){
-            check=this->board[j][i];
-            if(check =='*')
+            //check=this->board[j][i];
+            if(color != this->board[j][i])
                 continue;
             if(j <= 3){
                 if(i<=2){
@@ -206,20 +206,13 @@ int Game::checkEndGame(){
             }
         }       
     }
-    /*if we found winning and the char was player's 1 we return 1*/
-    if((flag==1)&&(check==this->playerOneColor))
-        return 1;
-    /*if we found winning and the char was player's 2 we return 1*/
-    else if((flag==1)&&(check==this->playerTwoColor))
-        return 2;
-    else
-        return 0;
+    return flag;
 }
 /*update board after insert or remove, note that addORremove variable is (0-6) range
  also note that the check if we can insert or remove is on client side..*/
 void Game::updateBoard(int position, char addORremove,int playerPlaying)
 {
-    int lastBlank=0;
+    int lastBlank = -1;
     /*searching for first position in column which the last blank*/
     while((this->board[position][lastBlank + 1]=='*') && (lastBlank < lines))
         lastBlank+=1;
@@ -240,8 +233,8 @@ void Game::updateBoard(int position, char addORremove,int playerPlaying)
             /*if we have more then 1 color at the column */
             if(lastBlank + 1 != lines){
                 /*dropping all chars down*/
-                for(int p = lastBlank + 1;p < lines; p++)
-                    this->board[position][p+1]=this->board[position][p];
+                for(int p = lines-1;p >lastBlank+1; p--)
+                    this->board[position][p]=this->board[position][p-1];
             }
             /*nulling the first position which hasn't been '*' */
             this->board[position][lastBlank+1]='*';

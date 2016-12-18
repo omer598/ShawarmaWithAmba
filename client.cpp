@@ -187,7 +187,7 @@ int main(int argc,char * argv [])
 		else if (buffer[0] == 'U') /*U- update board user side and print it*/
 		{
                         //getClearMsg(buffer);
-            cout << buffer+1 << endl;
+                        cout << buffer+1 << endl;
 			updateBoard(buffer+1, board);
 			printBoard(board);
 		}
@@ -249,12 +249,12 @@ int main(int argc,char * argv [])
 
 	//recv(sock,buffer,sizeof(buffer),0);
         /*delete dynamic allocations!!!*/
+	cout <<buffer+1<<"The game is over." << endl;
+	close(sock);
+	cout << "Socket closed!" << endl;
         for (int p = 0; p<lines; p++)
             delete [] board[p];
         delete[] board;
-	cout << "The game is over." << endl;
-	close(sock);
-	cout << "Socket closed!" << endl;
 	return 0;
 }
 

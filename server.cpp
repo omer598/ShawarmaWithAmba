@@ -243,12 +243,26 @@ int main(int argc, char * argv[])
 			//cout << buffer[0] << ' ' <<buffer[1]-'0' << ' ' << buffer[3] << ' ' << playerTurn+1 << endl;
 			switch (buffer[0]){
 				case 'N': //receive a move
-					if((buffer[3] == 'A' && g1.getBoard()[buffer[1]-'0'][0] != '*')||(buffer[3]=='R' && g1.getBoard()[buffer[1]-'0'][5] != u2.getColor()))
+                                        /* checks if we got correct cell INPUT*/
+                                        if(buffer[1] < '0' || buffer[1] >'6'){
+                                            nullTheArray(buffer);
+                                            sprintf(buffer,"TT\nplease insert a valid cell number (0-6)\n");
+                                            send(u2.getID(), buffer, sizeof(buffer), 0);                                            
+                                        }
+                                        /*checks if move inserted correctly*/
+                                        else if(buffer[3] != 'A' && buffer[3] != 'R'){
+                                            nullTheArray(buffer);
+                                            sprintf(buffer,"TT\nplease insert a valid move (A/R)\n");
+                                            send(u2.getID(), buffer, sizeof(buffer), 0);                                               
+                                        }
+                                        /*checks if input if column cells are valid to insert or remove. if not - sends error*/
+                                        else if((buffer[3] == 'A' && g1.getBoard()[buffer[1]-'0'][0] != '*')||(buffer[3]=='R' && g1.getBoard()[buffer[1]-'0'][5] != u2.getColor()))
 					{
 						nullTheArray(buffer);
-						sprintf(buffer,"TT\ninvalid cell, select another\n");
+						sprintf(buffer,"TT\ncannot perform move to cell. select another\n");
 						send(u2.getID(), buffer, sizeof(buffer), 0);
 					}
+                                        /*checks if player already played. if yes - sends error*/
 					else if (playerPlayed) {
 						cout << "Player " << 1+playerTurn << "played" << endl;
 						nullTheArray(buffer);
@@ -256,6 +270,7 @@ int main(int argc, char * argv[])
 						send(u2.getID(), buffer, sizeof(buffer), 0);
 						updateBoards(&g1,buffer,&u1,&u2);
 					}
+                                        /*if all doing player selected move*/
 					else {
 						g1.updateBoard(buffer[1]-'0',buffer[3],playerTurn+1);
 						updateBoards(&g1,buffer,&u1,&u2);
@@ -290,10 +305,26 @@ int main(int argc, char * argv[])
 				default:
 					break;
 			}
-			endGameFlag = g1.checkEndGame();
+                    if (g1.checkEndGame(u1.getColor()) && g1.checkEndGame(u2.getColor()))
+                    {
+                        endGameFlag = 1;
+                        sprintf(buffer,"E%s Won!!\n",u2.getUN());  
+                    }
+                    else if (g1.checkEndGame(u2.getColor()))
+                    {
+                        endGameFlag = 1;
+                        sprintf(buffer,"E%s Won!!\n",u2.getUN()); 
+                    }
+                    else if (g1.checkEndGame(u1.getColor()))
+                    {
+                        endGameFlag = 1;
+                        sprintf(buffer,"E%s Won!!\n",u1.getUN()); 
+                    }
+                    else
+                        endGameFlag = 0;
 		}
 		else { //1st player turn
-            cout<<"now player 1"<<endl;
+                        cout<<"now player 1"<<endl;
 			nullTheArray(buffer);
 			sprintf(buffer, "%s", "T");
 			send(u1.getID(), buffer, sizeof(buffer), 0);
@@ -302,7 +333,20 @@ int main(int argc, char * argv[])
 			cout << buffer[0] << ' ' <<buffer[1]-'0' << ' ' << buffer[3] << ' ' << playerTurn+1 << endl;
 			switch (buffer[0]){
 				case 'N': //receive a move
-					if((buffer[3] == 'A' && g1.getBoard()[buffer[1]-'0'][0] != '*')||(buffer[3]=='R' && g1.getBoard()[buffer[1]-'0'][5] != u1.getColor())){
+                                        /* checks if we got correct cell INPUT*/
+                                        if(buffer[1] < '0' || buffer[1] >'6'){
+                                            nullTheArray(buffer);
+                                            sprintf(buffer,"TT\nplease insert a valid cell number (0-6)\n");
+                                            send(u1.getID(), buffer, sizeof(buffer), 0);                                            
+                                        }
+                                        /*checks if move inserted correctly*/
+                                        else if(buffer[3] != 'A' && buffer[3] != 'R'){
+                                            nullTheArray(buffer);
+                                            sprintf(buffer,"TT\nplease insert a valid move (A/R)\n");
+                                            send(u1.getID(), buffer, sizeof(buffer), 0);                                               
+                                        }
+                                        /*checks if input if column cells are valid to insert or remove. if not - sends error*/
+                                        else if((buffer[3] == 'A' && g1.getBoard()[buffer[1]-'0'][0] != '*')||(buffer[3]=='R' && g1.getBoard()[buffer[1]-'0'][5] != u1.getColor())){
 						nullTheArray(buffer);
 						sprintf(buffer,"TT\ninvalid cell, select another!\n");
 						send(u1.getID(), buffer, sizeof(buffer), 0);
@@ -354,8 +398,23 @@ int main(int argc, char * argv[])
 			}
 
 		}
-		endGameFlag = g1.checkEndGame();
-
+                if (g1.checkEndGame(u1.getColor()) && g1.checkEndGame(u2.getColor()))
+                {
+                    endGameFlag = 1;
+                    sprintf(buffer,"E%s Won!!\n",u1.getUN());   
+                }
+                else if (g1.checkEndGame(u1.getColor()))
+                {
+                    endGameFlag = 1;
+                    sprintf(buffer,"E%s Won!!\n",u1.getUN()); 
+                }
+                else if (g1.checkEndGame(u2.getColor()))
+                {
+                    endGameFlag = 1;
+                    sprintf(buffer,"E%s Won!!\n",u2.getUN()); 
+                }
+                else
+                    endGameFlag = 0;
 	}
         
 	//while (checkIfWon()) - need to put inf loop until some1 wins..
@@ -365,7 +424,6 @@ int main(int argc, char * argv[])
 	//nullTheArray(buffer);
 	
 	//send an end game message to both players
-	sprintf(buffer, "%s", "E");
 	send(u1.getID(), buffer, sizeof(buffer), 0);
 	send(u2.getID(), buffer, sizeof(buffer), 0);
 	nullTheArray(buffer);

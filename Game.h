@@ -26,7 +26,7 @@ class Game
         //char ** board;
         Game(char,char);
         ~Game();
-        int checkEndGame();
+        int checkEndGame(char);
         void updateBoard(int,char,int);
         void printBoard();
         void returnBoard(char * buff);
